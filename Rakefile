@@ -15,6 +15,7 @@ begin
     
     gem.add_dependency('array_pair')
     gem.add_dependency('rsruby')
+    gem.add_dependency('bio')
   end
   Jeweler::GemcutterTasks.new
 rescue LoadError

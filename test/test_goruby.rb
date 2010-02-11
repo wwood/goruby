@@ -11,7 +11,8 @@ class GoTest < Test::Unit::TestCase
   
   def test_cellular_component_offspring
     # test no offspring
-    assert_equal [], @go.cellular_component_offspring('GO:0042717')
+    # GO:0031676 does not (as of test writing) have any offspring
+    assert_equal [], @go.cellular_component_offspring('GO:0031676')
     
     # test multiple offspring
     assert_equal ["GO:0030075","GO:0030077","GO:0030078","GO:0030079","GO:0030080",

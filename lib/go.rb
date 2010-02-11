@@ -1,6 +1,6 @@
 require 'rsruby'
 require 'bio'
- 
+require 'array_pair'
 
 module Bio
   class Go
