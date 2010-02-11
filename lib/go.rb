@@ -7,7 +7,6 @@ module Bio
     def initialize
       @r = RSRuby.instance
       @r.library('GO.db')
-      #      @r.print('initing') #debug to test if this is being loaded twice
     end
     
     # Return an array of GO identifiers that are the offspring (all the descendents)
@@ -70,13 +69,17 @@ module Bio
       #Synonym: ThTPase activity
       #Synonym: GO:0048253
       #Secondary: GO:0048253
+      
+      # A performance note:
+      # According to some tests that I ran, finding GOID by searching GOTERM
+      # is much faster than by GOSYNONYM. A
     
       begin
-        # try to find the synonym
-        return @r.eval_R("GOID(get('#{go_id_or_synonym_id}', GOSYNONYM))")
-      rescue RException
-        # if no synonym is found, try to find the primary ID. raise RException if none is found
+        # Assume it is a primary ID, as it likely will be most of the time.
         return @r.eval_R("GOID(get('#{go_id_or_synonym_id}', GOTERM))")
+      rescue RException
+        # if no primary is found, try to finding it by synonym. raise RException if none is found
+        return @r.eval_R("GOID(get('#{go_id_or_synonym_id}', GOSYNONYM))")
       end
     end
     
