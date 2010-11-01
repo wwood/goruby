@@ -15,11 +15,11 @@ module Bio
     def go_offspring(go_id)
       o = ontology_abbreviation(go_id)
       case o
-      when 'MF'
+        when 'MF'
         return molecular_function_offspring(go_id)
-      when 'CC'
+        when 'CC'
         return cellular_component_offspring(go_id)
-      when 'BP'
+        when 'BP'
         return biological_process_offspring(go_id)
       else
         raise Exception, "Unknown ontology abbreviation found: #{o} for go id: #{go_id}"
@@ -32,7 +32,7 @@ module Bio
     def cellular_component_offspring(go_term)
       go_get(go_term, 'GOCCOFFSPRING')
     end
-
+    
     # Return an array of GO identifiers that are the offspring (all the descendents)
     # of the given GO term given that it is a molecular function
     # GO term.     
@@ -73,13 +73,17 @@ module Bio
       # A performance note:
       # According to some tests that I ran, finding GOID by searching GOTERM
       # is much faster than by GOSYNONYM. A
-    
+      
       begin
         # Assume it is a primary ID, as it likely will be most of the time.
         return @r.eval_R("GOID(get('#{go_id_or_synonym_id}', GOTERM))")
       rescue RException
         # if no primary is found, try to finding it by synonym. raise RException if none is found
-        return @r.eval_R("GOID(get('#{go_id_or_synonym_id}', GOSYNONYM))")
+        begin
+          return @r.eval_R("GOID(get('#{go_id_or_synonym_id}', GOSYNONYM))")
+        rescue RException => e
+          raise RException, "#{e.message}: GO Identifier '#{go_id_or_synonym_id}' does not appear to be a primary ID nor synonym. Is the GO.db database up to date?"
+        end  
       end
     end
     
@@ -112,7 +116,7 @@ module Bio
       
       return gos.flatten.uniq
     end
-  
+    
     # Does the subsumer subsume the subsumee? i.e. Does it include
     # the subsumee as one of its children in the GO tree?
     # 
@@ -122,10 +126,10 @@ module Bio
       # map the subsumee to non-synonomic id
       primaree = self.primary_go_id(subsumee_go_id)
       primarer = self.primary_go_id(subsumer_go_id)
-    
+      
       # return if they are the same - the obvious case
       return true if primaree == primarer
-    
+      
       # return if subsumee is a descendent of sumsumer
       return go_offspring(primarer).include?(primaree)
     end
@@ -135,18 +139,40 @@ module Bio
     def subsume_tester(subsumer_go_id, check_for_synonym=true)
       Go::SubsumeTester.new(self, subsumer_go_id, check_for_synonym)
     end
-  
+    
     # Return 'MF', 'CC' or 'BP' corresponding to the
     def ontology_abbreviation(go_id)
       @r.eval_R("Ontology(get('#{go_id}', GOTERM))")
     end
-
+    
+    # Return an array of GO ids that correspond to the parent GO terms
+    # in the ontology. This isn't the most efficient this could be, because it
+    # probably gets the parents for a single id multiple times. 
+    def parents_cc(go_id, verbose=true)
+      parents = []
+      ungotten_parents = [go_id] 
+      
+      begin
+        me = ungotten_parents.pop
+        puts
+        puts me
+        my_parents = go_get(me, 'GOCCPARENTS').values
+        my_parents.reject!{|par| par=='all'} #'all' is the base of GO. 
+        ungotten_parents.push my_parents
+        parents.push my_parents
+        puts my_parents.join(', ')
+        ungotten_parents.flatten!.uniq!
+        puts ungotten_parents.join(", ")
+      end while ungotten_parents.length > 0
+      parents.flatten.uniq
+    end
+    
     class SubsumeTester
       attr_reader :subsumer_offspring, :master_go_id
-    
+      
       def initialize(go_object, subsumer_go_id, check_for_synonym=true)
         @go = go_object
-      
+        
         if check_for_synonym
           @master_go_id = @go.primary_go_id(subsumer_go_id)
         else
@@ -155,11 +181,11 @@ module Bio
         @subsumer_offspring = @go.go_offspring(@master_go_id)
         @subsumer_offspring_hash = [@subsumer_offspring].flatten.to_hash
       end
-    
+      
       def subsume?(subsumer_go_id, check_for_synonym=true)
         primaree = check_for_synonym ?
-          @go.primary_go_id(subsumer_go_id) :
-          subsumer_go_id
+        @go.primary_go_id(subsumer_go_id) :
+        subsumer_go_id
         return true if @master_go_id == primaree
         @subsumer_offspring_hash.has_key?(primaree)
       end
