@@ -148,25 +148,44 @@ module Bio
     # Return an array of GO ids that correspond to the parent GO terms
     # in the ontology. This isn't the most efficient this could be, because it
     # probably gets the parents for a single id multiple times. 
-    def parents_cc(go_id, verbose=true)
-      parents = []
-      ungotten_parents = [go_id] 
-      
-      begin
-        me = ungotten_parents.pop
-        puts
-        puts me
-        my_parents = go_get(me, 'GOCCPARENTS').values
-        my_parents.reject!{|par| par=='all'} #'all' is the base of GO. 
-        ungotten_parents.push my_parents
-        parents.push my_parents
-        puts my_parents.join(', ')
-        ungotten_parents.flatten!.uniq!
-        puts ungotten_parents.join(", ")
-      end while ungotten_parents.length > 0
-      parents.flatten.uniq
+    def ancestors_cc(primary_go_id)
+      go_get(primary_go_id, 'GOCCANCESTOR')
     end
     
+    # Return an array of ancestors of the GO term or any
+    # of the GO terms' children, in no particular order. This is useful
+    # when wanting to know if a term has an annotation that is 
+    # non-overlapping with a particular go term. For instance, 'membrane'
+    # is cordial with 'nucleus', they are boths is an ancestors of 
+    # 'nuclear membrane'. However, 'mitochondrion' and 'nucleus' are 
+    # not cordial, since they share no common offspring.
+    def cordial_cc(primary_go_id)
+      # cordial can be direct ancestors of a term - then the common term
+      # is this term itself
+      cordial_ids = ancestors_cc(primary_go_id)
+      
+      # collect all ancestors of all offspring
+      offspring = cellular_component_offspring(primary_go_id)
+      offspring.each do |o|
+        cordial_ids.push ancestors_cc(o)
+        cordial_ids.push o
+      end
+      
+      # remove the term itself and any children - they are not
+      # merely cordial
+      cordial_ids = cordial_ids.flatten.uniq.reject do |i|
+        offspring.include?(i) or primary_go_id==i
+      end
+      
+      # return a uniq array of cordial terms
+      cordial_ids
+    end
+    
+    # When repeatedly testing subsumtion by a certain GO term,
+    # it is faster to instantiate a SubsumeTester and use
+    # Bio::GO::SubsumeTester#subsume?, rather than
+    # repeatedly calling Bio::GO#subsume? because SubsumeTester
+    # does caching.
     class SubsumeTester
       attr_reader :subsumer_offspring, :master_go_id
       
