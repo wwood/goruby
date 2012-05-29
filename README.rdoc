@@ -1,16 +1,28 @@
-= goruby
+= Goruby
 
-Description goes here.
+GoRuby is a library to interact with the Gene Ontology by using the infrastructure setup in R. By connecting to R using RSRuby, the database interrogated and the surrounding R code can be leveraged. Plus, keeping the R library up to date is much simpler than having to trying to keep or store some other kind of data.
 
-== Note on Patches/Pull Requests
- 
-* Fork the project.
-* Make your feature addition or bug fix.
-* Add tests for it. This is important so I don't break it in a
-  future version unintentionally.
-* Commit, do not mess with rakefile, version, or history.
-  (if you want to have your own version, that is fine but bump version in a commit by itself I can ignore when I pull)
-* Send me a pull request. Bonus points for topic branches.
+== Installation
+
+First install RSRuby. For me it was like this, but there's more info at https://github.com/alexgutteridge/rsruby
+
+    $ gem install rsruby -- --with-R-dir=/usr/lib/R/ --with-R-include=/usr/share/R/include/
+
+Then installing goruby, which should be comparatively simple:
+
+    $ gem install goruby
+
+== Usage
+
+Methods are documented in the rdoc at http://rubydoc.info/gems/goruby particularly in the Bio::Go class. Also, be sure to have fun.
+
+== Citation
+
+Drug target prediction and prioritization: using orthology to predict essentiality in parasite genomes.
+Maria A Doyle, Robin B Gasser, Ben J Woodcroft, Ross S Hall and Stuart A Ralph
+BMC Genomics. 2010 Apr 3;11:222.
+
+http://www.biomedcentral.com/1471-2164/11/222
 
 == Copyright
 
