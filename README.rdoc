@@ -12,9 +12,26 @@ Then installing goruby, which should be comparatively simple:
 
     $ gem install goruby
 
+Make sure that the Bioconductor package GO.db is available. In R:
+
+    > library(GO.db)
+
+If not, you can install like this in R:
+
+    > source("http://bioconductor.org/biocLite.R")
+    > biocLite("GO.db")
+
 == Usage
 
-Methods are documented in the rdoc at http://rubydoc.info/gems/goruby particularly in the Bio::Go class. Also, be sure to have fun.
+To extract a list of GO terms that have "melanosome" (GO:0042470) as an ancestor:
+
+    go.go_offspring('GO:0042470')  #=> ["GO:0033162", "GO:0034493"]
+
+And to convert those offspring into human-readable names
+
+    go.go_offspring('GO:0042470').collect{|offspring| go.term(offspring)} #=> ["melanosome membrane", "melanosome lumen"]
+
+More methods are documented in the rdoc at http://rubydoc.info/gems/goruby particularly in the Bio::Go class. Also, be sure to have fun.
 
 == Citation
 
